@@ -2,3 +2,11 @@ datasets/
 __pycache__/
 *.jpg
 *.png
+
+# Kết quả huấn luyện & artifacts mô hình (chia sẻ qua link Drive trong models/README.md)
+runs/
+*.pt
+*.onnx
+*.har
+*.hef
+models/*_meta.json

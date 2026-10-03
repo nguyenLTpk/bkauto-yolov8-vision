@@ -1,0 +1,12 @@
+# Môi trường server (RTX 5070 Ti - Blackwell sm_120).
+# Cài PyTorch build CUDA 12.8 TRƯỚC (bản PyPI mặc định có thể không hỗ trợ sm_120):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+ultralytics==8.4.172
+onnx>=1.15
+onnxslim>=0.1.82
+onnxruntime>=1.17
+tensorboard
+numpy
+opencv-python
+pillow
+pyyaml

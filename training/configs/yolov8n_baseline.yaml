@@ -1,0 +1,54 @@
+# Cấu hình huấn luyện Baseline YOLOv8n - Server RTX 5070 Ti (16 GB VRAM, dùng chung)
+# Dùng bởi training/train.py; mọi khóa (trừ nhóm "Khóa riêng") được truyền thẳng vào
+# ultralytics model.train() - tham khảo ultralytics/cfg/default.yaml (ultralytics==8.4.172).
+
+# ---- Dữ liệu & mô hình ----
+model: yolov8n.pt                    # trọng số COCO pretrained, tự tải về lần đầu
+data: datasets/processed/data.yaml   # sinh bởi data_engineering/clean_and_filter.py
+imgsz: 640                           # bội số của 32, cố định cho NPU Hailo-8
+
+# ---- Lịch huấn luyện ----
+epochs: 300
+patience: 50          # Early Stopping: dừng sau 50 epoch không cải thiện fitness (= mAP@0.5:0.95 trên val)
+batch: 32             # ~5 GB VRAM với YOLOv8n@640 - chừa chỗ cho người dùng chung GPU
+workers: 8
+cache: false          # 'ram' nhanh hơn nhưng tốn ~10 GB RAM; 'disk' tạo file .npy cạnh ảnh
+amp: true             # Mixed precision FP16 (cần PyTorch build CUDA 12.8+ cho Blackwell sm_120)
+device: 0
+
+# ---- Optimizer & LR schedule ----
+optimizer: AdamW
+lr0: 0.001            # AdamW cần LR nhỏ hơn SGD (mặc định 0.01 của Ultralytics là cho SGD)
+lrf: 0.01             # LR cuối = lr0 * lrf
+cos_lr: true          # Cosine Annealing
+momentum: 0.937       # beta1 của AdamW
+weight_decay: 0.0005
+warmup_epochs: 3.0
+warmup_bias_lr: 0.0   # BẮT BUỘC với Adam/AdamW: mặc định 0.1 (cho SGD) = 100x lr0 làm lệch bias pretrained
+close_mosaic: 10      # tắt mosaic 10 epoch cuối để mô hình quen phân bố ảnh thật
+
+# ---- Tăng cường dữ liệu (mô phỏng điều kiện sa bàn) ----
+hsv_h: 0.015          # lệch tông màu nhẹ
+hsv_s: 0.7            # độ bão hòa - đèn sa bàn thay đổi
+hsv_v: 0.4            # độ sáng - vùng sáng/tối, phản quang
+degrees: 5.0          # camera nghiêng nhẹ khi xe ôm cua
+translate: 0.1
+scale: 0.5            # biển báo xa/gần
+shear: 2.0
+fliplr: 0.5           # an toàn vì mọi loại biển gộp chung 1 lớp traffic_sign
+mosaic: 1.0
+mixup: 0.0
+
+# ---- Tái lập & nhật ký ----
+seed: 42
+deterministic: true
+project: runs/train
+name: yolov8n_baseline
+exist_ok: false
+plots: true
+
+# ---- Khóa riêng của training/train.py (KHÔNG truyền vào Ultralytics) ----
+tensorboard: true           # bật callback TensorBoard -> runs/train/<name>/events.out.tfevents.*
+image_weights: true         # lấy mẫu ảnh có trọng số để cân bằng traffic_sign >> pedestrian
+image_weights_power: 0.5    # 0 = tắt, 0.5 = sqrt (LVIS repeat-factor), 1 = cân bằng tuyệt đối
+best_weights_out: models/best.pt
