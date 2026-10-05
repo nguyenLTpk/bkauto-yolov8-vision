@@ -1,4 +1,6 @@
-# Cấu hình huấn luyện Baseline YOLOv8n - Server RTX 5070 Ti (16 GB VRAM, dùng chung)
+# Cấu hình huấn luyện YOLOv8n - CHỈ ĐỂ THAM KHẢO / so sánh mAP PyTorch trong báo cáo.
+# Pipeline triển khai (export_onnx -> compile_npu -> edge_deployment) chỉ hỗ trợ YOLO26 NMS-free và sẽ từ chối
+# trọng số YOLOv8. Trọng số ghi ra models/yolov8n_best.pt để KHÔNG ghi đè models/best.pt của YOLO26m.
 # Dùng bởi training/train.py; mọi khóa (trừ nhóm "Khóa riêng") được truyền thẳng vào
 # ultralytics model.train() - tham khảo ultralytics/cfg/default.yaml (ultralytics==8.4.172).
 
@@ -51,4 +53,4 @@ plots: true
 tensorboard: true           # bật callback TensorBoard -> runs/train/<name>/events.out.tfevents.*
 image_weights: true         # lấy mẫu ảnh có trọng số để cân bằng traffic_sign >> pedestrian
 image_weights_power: 0.5    # 0 = tắt, 0.5 = sqrt (LVIS repeat-factor), 1 = cân bằng tuyệt đối
-best_weights_out: models/best.pt
+best_weights_out: models/yolov8n_best.pt   # tách khỏi models/best.pt (YOLO26m)

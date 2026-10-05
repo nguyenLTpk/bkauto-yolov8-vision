@@ -1,0 +1,39 @@
+# =============================================================================================
+# Môi trường Hailo Dataflow Compiler (DFC 3.x, cho Hailo-8) - dùng cho optimization/compile_npu.py
+# =============================================================================================
+# DFC CHỈ chạy trên Linux x86_64, RAM >= 16 GB (khuyến nghị 32 GB). Không có bản Windows gốc.
+#   - DFC <= 3.31: Ubuntu 20.04/22.04 + Python 3.8-3.10
+#   - DFC >= 3.32: thêm Ubuntu 24.04 + Python 3.11/3.12
+#   -> Lựa chọn an toàn cho mọi bản 3.x: Ubuntu 22.04 + Python 3.10.
+#
+# NƠI CHẠY:
+#   1) Khuyến nghị: server Linux (RTX 5070 Ti) - đủ RAM, có GPU -> compile_npu.py tự dùng
+#      optimization_level=2 (equalization + fine-tune QFT), nên tạo 1024 ảnh: calibrate_ptq.py --num 1024.
+#   2) Windows qua WSL2: CHỈ khi máy có >= 16 GB RAM. DFC trong WSL2 không dùng được GPU -> level 1.
+#      Laptop 8 GB RAM (WSL2 đang giới hạn 4 GB) KHÔNG đáp ứng yêu cầu của DFC: bước optimize/compile
+#      gần như chắc chắn bị hết bộ nhớ (OOM).
+#
+# ---- Cài đặt (Ubuntu 22.04 trên server, hoặc WSL2: `wsl --install -d Ubuntu-22.04` trong PowerShell Admin) ----
+# WSL2: cấp RAM trong %USERPROFILE%\.wslconfig rồi chạy `wsl --shutdown`:
+#        [wsl2]
+#        memory=16GB
+#        swap=16GB
+# Trong Ubuntu:
+#        sudo apt update && sudo apt install -y python3.10-dev python3.10-venv python3.10-distutils \
+#             python3-pip python3-tk graphviz graphviz-dev libgraphviz-dev libfuse2 build-essential unzip
+#        python3.10 -m venv ~/hailo_dfc && source ~/hailo_dfc/bin/activate && pip install -U pip wheel
+# Tải wheel từ Hailo Developer Zone (cần tài khoản): https://hailo.ai/developer-zone/software-downloads/
+#   -> Dataflow Compiler 3.x, Python wheel Linux x86_64. Chọn CÙNG đợt phát hành (Hailo AI Software Suite)
+#   với HailoRT trên Raspberry Pi 5 (kiểm tra trên Pi: `hailortcli --version`), vì HEF biên dịch bằng DFC
+#   mới hơn có thể không chạy trên HailoRT cũ.
+#        pip install ./hailo_dataflow_compiler-3.<xx>.<x>-py3-none-linux_x86_64.whl
+#        hailo --version
+#        pip install -r optimization/requirements-hailo.txt
+#
+# Wheel DFC tự kéo theo các phụ thuộc đã ghim phiên bản (tensorflow, onnx, onnxruntime, numpy, ...).
+# KHÔNG cài torch/ultralytics vào môi trường này để tránh xung đột numpy/protobuf.
+# calibrate_ptq.py chạy ở môi trường chính (requirements.txt gốc), chỉ cần opencv + numpy.
+#
+# compile_npu.py không cần gói nào ngoài DFC (numpy/onnx/tensorflow đi kèm). Dòng dưới chỉ để
+# `pip install -r` có nội dung; pip giữ nguyên phiên bản numpy mà DFC đã ghim.
+numpy

@@ -10,3 +10,14 @@ runs/
 *.har
 *.hef
 models/*_meta.json
+*.npy
+models/calib/
+models/*_build/
+
+# Edge deployment
+edge_deployment/build*/
+edge_deployment/results/
+edge_deployment/frame_stats.csv
+
+# Cấu hình IDE riêng từng máy (đường dẫn tuyệt đối)
+.vscode/

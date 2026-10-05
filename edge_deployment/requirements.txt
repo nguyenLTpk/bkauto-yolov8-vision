@@ -1,0 +1,17 @@
+# Môi trường Python trên Raspberry Pi 5 cho benchmark_profiler.py
+#
+# KHUYẾN NGHỊ - chỉ dùng gói apt (không cần pip):
+#   sudo apt install python3-numpy python3-opencv python3-psutil
+#   (hailo_platform đến từ python3-hailort, đã cài qua `sudo apt install hailo-all`)
+#
+# Nếu muốn dùng venv: BẮT BUỘC --system-site-packages để thấy hailo_platform của hệ thống
+#   python3 -m venv --system-site-packages ~/bkauto-venv && source ~/bkauto-venv/bin/activate
+#   pip install -r edge_deployment/requirements.txt
+#
+# KHÔNG pip install numpy: python3-hailort được build với numpy của distro (Bookworm 1.24, Trixie 2.2);
+# một bản numpy khác major cài vào venv sẽ làm hỏng hailo_platform. numpy/opencv lấy từ apt.
+psutil>=5.9
+
+# Tuỳ chọn:
+# opencv-python-headless<4.12   # chỉ khi không dùng được python3-opencv; Bookworm (numpy 1.x) cần < 4.12
+# onnxruntime                    # so sánh baseline ONNX FP32 ngay trên Pi (benchmark_profiler.py --onnx)

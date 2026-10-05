@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-train.py - Giai đoạn 2: Huấn luyện Baseline YOLOv8n trên server RTX 5070 Ti.
+train.py - Giai đoạn 2: Huấn luyện YOLO26m (NMS-free) trên server RTX 5070 Ti.
 
-Siêu tham số đọc từ training/configs/yolov8n_baseline.yaml (có thể ghi đè bằng CLI).
+Siêu tham số đọc từ training/configs/yolo26m_baseline.yaml (mặc định), có thể ghi đè bằng CLI.
+training/configs/yolov8n_baseline.yaml chỉ để tham khảo (ghi ra models/yolov8n_best.pt, không vào pipeline NPU).
+YOLO26 (head NMS-free one2one, không DFL) dùng chung DetectionTrainer nên lấy mẫu image_weights vẫn áp dụng.
 
 Về image_weights:
   Ultralytics YOLOv8 (>= 8.1, kể cả 8.4.x) ĐÃ GỠ tham số `image_weights` của YOLOv5 - truyền vào
@@ -18,8 +20,9 @@ Early Stopping / best.pt: Ultralytics 8.4 dùng fitness = mAP@0.5:0.95 trên t�
 
 Ví dụ:
   python training/train.py
-  python training/train.py --epochs 100 --batch 64 --name yolov8n_bs64
-  python training/train.py --resume runs/train/yolov8n_baseline/weights/last.pt
+  python training/train.py --epochs 100 --batch 24 --name yolo26m_bs24
+  python training/train.py --config training/configs/yolov8n_baseline.yaml      # YOLOv8n tham khảo (không deploy)
+  python training/train.py --resume runs/train/yolo26m_baseline/weights/last.pt
 """
 
 import argparse
@@ -37,7 +40,7 @@ from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.utils import LOGGER
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONFIG = REPO_ROOT / "training" / "configs" / "yolov8n_baseline.yaml"
+DEFAULT_CONFIG = REPO_ROOT / "training" / "configs" / "yolo26m_baseline.yaml"
 CUSTOM_KEYS = ("tensorboard", "image_weights", "image_weights_power", "best_weights_out")
 
 
@@ -101,11 +104,11 @@ class BalancedDetectionTrainer(DetectionTrainer):
 # Main
 # --------------------------------------------------------------------------- #
 def parse_args():
-    p = argparse.ArgumentParser(description="Huấn luyện Baseline YOLOv8n (BKAuto).",
+    p = argparse.ArgumentParser(description="Huấn luyện YOLO26m NMS-free (BKAuto).",
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     p.add_argument("--config", type=Path, default=DEFAULT_CONFIG, help="File YAML siêu tham số")
     p.add_argument("--data", type=str, help="Ghi đè đường dẫn data.yaml")
-    p.add_argument("--model", type=str, help="Ghi đè trọng số khởi tạo (vd yolov8s.pt)")
+    p.add_argument("--model", type=str, help="Ghi đè trọng số khởi tạo (vd yolo26l.pt)")
     p.add_argument("--epochs", type=int)
     p.add_argument("--batch", type=float, help="Số nguyên, hoặc 0-1 = tỷ lệ VRAM cho AutoBatch")
     p.add_argument("--imgsz", type=int)
@@ -184,6 +187,10 @@ def main():
         sys.exit(f"[LỖI] Không tìm thấy {best} - quá trình huấn luyện có thể đã bị ngắt.")
     out = Path(custom.get("best_weights_out", REPO_ROOT / "models" / "best.pt"))
     out.parent.mkdir(parents=True, exist_ok=True)
+    if out.is_file():  # không ghi đè mất trọng số của lần huấn luyện trước
+        backup = out.with_name(f"{out.stem}.prev{out.suffix}")
+        shutil.copy2(out, backup)
+        print(f"Đã sao lưu {out.name} cũ -> {backup}")
     shutil.copy2(best, out)
 
     # Dùng print thay LOGGER: LOGGER của Ultralytics xóa ký tự non-ASCII (tiếng Việt) trên Windows
